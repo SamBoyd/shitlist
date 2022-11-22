@@ -7,7 +7,7 @@ import pkgutil
 import sys
 from typing import List, Callable
 import logging
-from pathlib import Path
+from pathlib import Path, PosixPath
 
 import click
 from shitlist.decorator_use_collector import DecoratorUseCollector
@@ -59,7 +59,7 @@ def deprecate(func):
         raise WrongTypeError()
 
 
-def gen_for_path(root_path):
+def gen_for_path(root_path: str):
     result = set()
     walker = os.walk(root_path)
 
@@ -75,7 +75,7 @@ def gen_for_path(root_path):
                 with open(path, 'r') as f:
                     collector.visit(ast.parse(f.read()))
 
-                module_relative_path = str(path).replace(root_path+'/', '')
+                module_relative_path = str(path).replace(root_path + '/', '')
                 result.update([f'{module_relative_path}::{thing}' for thing in collector.nodes_with_decorators])
         except StopIteration:
             break

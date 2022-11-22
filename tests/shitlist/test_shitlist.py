@@ -1,5 +1,6 @@
 import importlib
 import os
+from pathlib import PosixPath
 
 import pytest
 from hamcrest import assert_that, equal_to, has_items, contains_inanyorder, only_contains
@@ -46,8 +47,9 @@ def test_passes_check(mocker):
     func()
 
 
-def test_generate_shitlist_for_path(mocker):
-    result = shitlist.gen_for_path('/Users/sam/projects/shitlist/tests')
+def test_generate_shitlist_for_path(pytestconfig):
+    test_root = PosixPath(pytestconfig.rootpath)
+    result = shitlist.gen_for_path(str(test_root.parent))
 
     expected_result = [
         'example_module/__init__.py::wrapped_1',
