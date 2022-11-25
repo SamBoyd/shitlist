@@ -63,12 +63,10 @@ def test():
     if not os.path.exists('.shitlist'):
         logger.info('Cannot test there is no config file present')
 
-    existing_config = {}
-    with open('.shitlist', 'r') as f:
-        existing_config = json.load(f)
+    existing_config = shitlist.Config.from_file('.shitlist')
 
     cwd = os.getcwd()
-    new_config = dict(
+    new_config = shitlist.Config(
         deprecated_things=shitlist.gen_for_path(cwd),
         usage={}
     )

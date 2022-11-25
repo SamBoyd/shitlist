@@ -13,6 +13,7 @@ import click
 
 from shitlist.deprecated_thing_use_collector import DeprecatedThingUseCollector
 from shitlist.decorator_use_collector import DecoratorUseCollector
+from Config import Config
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = logging.getLogger(__name__)
@@ -92,13 +93,13 @@ def gen_for_path(root_path: str):
     return sorted(list(result))
 
 
-def test(existing_config, new_config):
-    for deprecated in existing_config['deprecated_things']:
-        exiting_usages = set(existing_config['usage'].get(deprecated, []))
-        new_usages = set(new_config['usage'].get(deprecated, []))
+def test(existing_config: Config, new_config: Config):
+    for thing in existing_config.deprecated_things:
+        exiting_usages = set(existing_config.usage.get(thing, []))
+        new_usages = set(new_config.usage.get(thing, []))
         dif = new_usages.difference(exiting_usages)
         if len(dif) > 0:
-            raise DeprecatedException(f'Deprecated function {deprecated}, has new usages {dif}')
+            raise DeprecatedException(f'Deprecated function {thing}, has new usages {dif}')
 
 
 def find_usages(root_path: str, deprecated_things: List[str]):

@@ -1,14 +1,10 @@
-import importlib
-import os
 from pathlib import PosixPath
 
 import pytest
-from hamcrest import assert_that, equal_to, has_items, contains_inanyorder, only_contains
+from hamcrest import assert_that, has_items
 
 import shitlist
 from shitlist import deprecate
-
-from tests import example_module
 
 
 @shitlist.deprecate
@@ -66,31 +62,31 @@ def test_generate_shitlist_for_path(pytestconfig):
 
 
 def test_shitlist_test_throws_an_exception_if_theres_a_new_usage_of_a_deprecated_thing():
-    existing_config = {
-        'deprecated_things': [
+    existing_config = shitlist.Config(
+        deprecated_things=[
             'thing_1',
             'thing_2',
             'thing_3'
         ],
-        'usage': {
+        usage={
             'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
             'thing_2': ['usage_1_of_thing_2', 'usage_2_of_thing_2'],
             'thing_3': ['usage_1_of_thing_3', 'usage_2_of_thing_3'],
         }
-    }
+    )
 
-    new_config = {
-        'deprecated_things': [
+    new_config = shitlist.Config(
+        deprecated_things=[
             'thing_1',
             'thing_2',
             'thing_3'
         ],
-        'usage': {
+        usage={
             'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
             'thing_2': ['usage_1_of_thing_2', 'usage_2_of_thing_2'],
             'thing_3': ['usage_1_of_thing_3', 'usage_2_of_thing_3', 'usage_3_of_thing_3'],
         }
-    }
+    )
 
     with pytest.raises(shitlist.DeprecatedException):
         shitlist.test(
@@ -100,30 +96,30 @@ def test_shitlist_test_throws_an_exception_if_theres_a_new_usage_of_a_deprecated
 
 
 def test_shitlist_test_passes():
-    existing_config = {
-        'deprecated_things': [
+    existing_config = shitlist.Config(
+        deprecated_things=[
             'thing_1',
             'thing_2',
             'thing_3'
         ],
-        'usage': {
+        usage={
             'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
             'thing_2': ['usage_1_of_thing_2', 'usage_2_of_thing_2'],
             'thing_3': ['usage_1_of_thing_3', 'usage_2_of_thing_3'],
         }
-    }
+    )
 
-    new_config = {
-        'deprecated_things': [
+    new_config = shitlist.Config(
+        deprecated_things=[
             'thing_1',
             'thing_3'
         ],
-        'usage': {
+        usage={
             'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
             'thing_3': [],
             'thing_not_in_existing_config': ['usage']
         }
-    }
+    )
 
     shitlist.test(
         existing_config=existing_config,
