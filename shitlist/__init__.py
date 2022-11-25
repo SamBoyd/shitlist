@@ -13,7 +13,7 @@ import click
 
 from shitlist.deprecated_thing_use_collector import DeprecatedThingUseCollector
 from shitlist.decorator_use_collector import DecoratorUseCollector
-from Config import Config
+from shitlist.foo import Config
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = logging.getLogger(__name__)
@@ -140,3 +140,23 @@ def find_usages(root_path: str, deprecated_things: List[str]):
             break
 
     return result
+
+
+def update(existing_config: Config, new_config: Config):
+    merged_config = Config(
+        deprecated_things=new_config.deprecated_things,
+        usage=new_config.usage,
+    )
+
+    merged_config.successfully_removed_things = [
+        t for t in existing_config.deprecated_things if t not in new_config.deprecated_things
+    ]
+
+    for thing, new_usage in new_config.usage.items():
+        if thing in existing_config.usage:
+            existing_usage = existing_config.usage[thing]
+            removed_usages = [u for u in existing_usage if u not in new_usage]
+            if removed_usages:
+                merged_config.removed_usages[thing] = list(removed_usages)
+
+    return merged_config

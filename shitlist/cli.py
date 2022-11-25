@@ -77,7 +77,40 @@ def test():
     )
 
 
-cli = click.CommandCollection(sources=[cli2, init_cli, test_cli])
+@click.group()
+def update_cli():
+    pass
+
+
+@update_cli.command()
+def update():
+    """Update the config with removed usages
+    """
+    existing_config = shitlist.Config.from_file('.shitlist')
+
+    cwd = os.getcwd()
+
+    new_config = shitlist.Config(
+        deprecated_things=shitlist.gen_for_path(cwd),
+        usage={}
+    )
+
+    shitlist.test(
+        existing_config=existing_config,
+        new_config=new_config
+    )
+
+    merged_config = shitlist.update(
+        existing_config=existing_config,
+        new_config=new_config
+    )
+    with open('.shitlist', 'w', encoding='utf-8') as file:
+        json.dump(merged_config.__dict__(), file, ensure_ascii=False, indent=4)
+        file.write('\n')
+        file.flush()
+
+
+cli = click.CommandCollection(sources=[cli2, init_cli, test_cli, update_cli])
 
 
 def main():

@@ -1,7 +1,7 @@
 from pathlib import PosixPath
 
 import pytest
-from hamcrest import assert_that, has_items
+from hamcrest import assert_that, has_items, equal_to
 
 import shitlist
 from shitlist import deprecate
@@ -95,6 +95,10 @@ def test_shitlist_test_throws_an_exception_if_theres_a_new_usage_of_a_deprecated
         )
 
 
+def test_shitlist_test_should_fail_if_reintroduce_a_previously_deprecated_thing():
+    assert_that(True, equal_to(False))
+
+
 def test_shitlist_test_passes():
     existing_config = shitlist.Config(
         deprecated_things=[
@@ -143,3 +147,82 @@ def test_find_usages(pytestconfig):
     }
     assert_that(result, equal_to(expected_result))
 
+
+def test_update_config():
+    existing_config = shitlist.Config(
+        deprecated_things=[
+            'thing_1',
+            'thing_2',
+            'thing_3'
+        ],
+        usage={
+            'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
+            'thing_2': ['usage_1_of_thing_2', 'usage_2_of_thing_2'],
+            'thing_3': ['usage_1_of_thing_3', 'usage_2_of_thing_3'],
+        }
+    )
+
+    new_config = shitlist.Config(
+        deprecated_things=[
+            'thing_1',
+            'thing_3',
+            'thing_not_in_existing_config'
+        ],
+        usage={
+            'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
+            'thing_3': ['usage_2_of_thing_3'],
+            'thing_not_in_existing_config': ['usage']
+        }
+    )
+
+    updated_config = shitlist.update(
+        existing_config=existing_config,
+        new_config=new_config
+    )
+
+    expected_config = shitlist.Config(
+        deprecated_things=[
+            'thing_1',
+            'thing_3',
+            'thing_not_in_existing_config'
+        ],
+        usage={
+            'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
+            'thing_3': ['usage_2_of_thing_3'],
+            'thing_not_in_existing_config': ['usage']
+        },
+        removed_usages={
+            'thing_3': ['usage_1_of_thing_3']
+        },
+        successfully_removed_things=[
+            'thing_2',
+        ]
+    )
+
+    assert_config_are_equal(updated_config, expected_config)
+
+
+def assert_config_are_equal(config_1: shitlist.Config, config_2: shitlist.Config):
+    assert_that(
+        config_1.deprecated_things,
+        equal_to(config_2.deprecated_things),
+        'property deprecated_things are not equal'
+    )
+
+    assert_that(
+        config_1.usage,
+        equal_to(config_2.usage),
+        'property usage are not equal'
+    )
+
+    assert_that(
+        config_1.removed_usages,
+        equal_to(config_2.removed_usages),
+        'property removed_usages are not equal'
+    )
+
+    assert_that(
+        config_1.successfully_removed_things,
+        equal_to(config_2.successfully_removed_things),
+        'property successfully_removed_things are not equal'
+    )
