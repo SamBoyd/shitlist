@@ -52,14 +52,32 @@ def test_generate_shitlist_for_path(pytestconfig):
     result = shitlist.gen_for_path(str(test_root.parent))
 
     expected_result = [
-        'example_module/__init__.py::wrapped_1',
-        'example_module/__init__.py::wrapped_2',
-        'example_module/example_file.py::wrapped_3',
-        'example_module/submodule/__init__.py::wrapped',
-        'example_module/submodule/example_file.py::wrapped',
+        'example_module::wrapped_1',
+        'example_module::wrapped_2',
+        'example_module.example_file::wrapped_3',
+        'example_module.submodule::wrapped',
+        'example_module.submodule.example_file::wrapped',
     ]
 
     assert_that(
         result,
         has_items(*expected_result)
     )
+
+
+def test_find_usages(pytestconfig):
+    test_root = PosixPath(pytestconfig.rootpath)
+
+    deprecated_things = [
+        'tests.example_module::wrapped_2',
+        'tests.example_module::wrapped_1'
+    ]
+
+    result = shitlist.find_usages(str(test_root.parent), deprecated_things)
+
+    expected_result = {
+        'tests.example_module::wrapped_2': ['example_module.example_file::wrapped_3'],
+        'tests.example_module::wrapped_1': ['example_module.example_file::wrapped_3']
+    }
+    assert_that(result, equal_to(expected_result))
+

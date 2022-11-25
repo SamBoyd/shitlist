@@ -3,6 +3,7 @@ import logging
 import os
 
 import click
+
 import shitlist
 
 logger = logging.getLogger(__name__)
@@ -26,10 +27,14 @@ def init():
     click.echo("Initializing config file in .shitlist")
 
     cwd = os.getcwd()
+    deprecated_things = shitlist.gen_for_path(cwd)
+
+    usages = shitlist.find_usages(cwd, deprecated_things)
 
     with open('.shitlist', 'w', encoding='utf-8') as file:
         data = dict(
-            decorated_funcs=shitlist.gen_for_path(cwd)
+            deprecated_things=deprecated_things,
+            usages=usages
         )
         json.dump(data, file, ensure_ascii=False, indent=4)
         file.write('\n')

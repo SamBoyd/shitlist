@@ -5,11 +5,13 @@ import logging
 import os
 import pkgutil
 import sys
-from typing import List, Callable
+from typing import List, Callable, Dict
 import logging
 from pathlib import Path, PosixPath
 
 import click
+
+from shitlist.deprecated_thing_use_collector import DeprecatedThingUseCollector
 from shitlist.decorator_use_collector import DecoratorUseCollector
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -76,8 +78,51 @@ def gen_for_path(root_path: str):
                     collector.visit(ast.parse(f.read()))
 
                 module_relative_path = str(path).replace(root_path + '/', '')
+                if '__init__' in module_relative_path:
+                    module_relative_path = module_relative_path.replace('/__init__.py', '')
+                module_relative_path = module_relative_path.replace('.py', '').replace('/', '.')
                 result.update([f'{module_relative_path}::{thing}' for thing in collector.nodes_with_decorators])
         except StopIteration:
             break
 
     return sorted(list(result))
+
+
+def find_usages(root_path: str, deprecated_things: List[str]):
+    result = {}
+    walker = os.walk(root_path)
+
+    while True:
+        try:
+            dir, subdirs, files = next(walker)
+            for file in [f for f in files if f[-3:] == '.py']:
+                print(f'looking at file: {dir}/{file}')
+                path = Path(f'{dir}/{file}')
+                module_name = path.stem
+                relative_path = str(path).replace(f'{root_path}/', '')
+                if module_name == '__init__':
+                    relative_path = relative_path.replace('/__init__.py', '')
+
+                package = relative_path.replace('.py', '').replace('/', '.')
+
+                for thing in deprecated_things:
+                    module, _, function_name = thing.rpartition('::')
+                    module_package = module.split('.')[0]
+                    print(f'searching for {module_package}::{function_name}')
+                    collector = DeprecatedThingUseCollector(
+                        deprecated_thing=function_name,
+                        modulename=module,
+                        package=module_package
+                    )
+
+                    with open(path, 'r') as f:
+                        collector.visit(ast.parse(f.read()))
+
+                    if thing in result:
+                        result[thing].extend([f'{package}::{u}' for u in collector.used_at])
+                    else:
+                        result[thing] = collector.used_at
+        except StopIteration:
+            break
+
+    return result
