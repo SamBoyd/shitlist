@@ -65,6 +65,72 @@ def test_generate_shitlist_for_path(pytestconfig):
     )
 
 
+def test_shitlist_test_throws_an_exception_if_theres_a_new_usage_of_a_deprecated_thing():
+    existing_config = {
+        'deprecated_things': [
+            'thing_1',
+            'thing_2',
+            'thing_3'
+        ],
+        'usage': {
+            'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
+            'thing_2': ['usage_1_of_thing_2', 'usage_2_of_thing_2'],
+            'thing_3': ['usage_1_of_thing_3', 'usage_2_of_thing_3'],
+        }
+    }
+
+    new_config = {
+        'deprecated_things': [
+            'thing_1',
+            'thing_2',
+            'thing_3'
+        ],
+        'usage': {
+            'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
+            'thing_2': ['usage_1_of_thing_2', 'usage_2_of_thing_2'],
+            'thing_3': ['usage_1_of_thing_3', 'usage_2_of_thing_3', 'usage_3_of_thing_3'],
+        }
+    }
+
+    with pytest.raises(shitlist.DeprecatedException):
+        shitlist.test(
+            existing_config=existing_config,
+            new_config=new_config
+        )
+
+
+def test_shitlist_test_passes():
+    existing_config = {
+        'deprecated_things': [
+            'thing_1',
+            'thing_2',
+            'thing_3'
+        ],
+        'usage': {
+            'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
+            'thing_2': ['usage_1_of_thing_2', 'usage_2_of_thing_2'],
+            'thing_3': ['usage_1_of_thing_3', 'usage_2_of_thing_3'],
+        }
+    }
+
+    new_config = {
+        'deprecated_things': [
+            'thing_1',
+            'thing_3'
+        ],
+        'usage': {
+            'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
+            'thing_3': [],
+            'thing_not_in_existing_config': ['usage']
+        }
+    }
+
+    shitlist.test(
+        existing_config=existing_config,
+        new_config=new_config
+    )
+
+
 def test_find_usages(pytestconfig):
     test_root = PosixPath(pytestconfig.rootpath)
 

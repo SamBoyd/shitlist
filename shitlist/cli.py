@@ -34,7 +34,7 @@ def init():
     with open('.shitlist', 'w', encoding='utf-8') as file:
         data = dict(
             deprecated_things=deprecated_things,
-            usages=usages
+            usage=usages
         )
         json.dump(data, file, ensure_ascii=False, indent=4)
         file.write('\n')
@@ -51,7 +51,35 @@ def cmd2():
     """Command on cli2"""
 
 
-cli = click.CommandCollection(sources=[cli2, init_cli])
+@click.group()
+def test_cli():
+    pass
+
+
+@test_cli.command()
+def test():
+    """Test new usages of deprecated code
+    """
+    if not os.path.exists('.shitlist'):
+        logger.info('Cannot test there is no config file present')
+
+    existing_config = {}
+    with open('.shitlist', 'r') as f:
+        existing_config = json.load(f)
+
+    cwd = os.getcwd()
+    new_config = dict(
+        deprecated_things=shitlist.gen_for_path(cwd),
+        usage={}
+    )
+
+    shitlist.test(
+        existing_config=existing_config,
+        new_config=new_config
+    )
+
+
+cli = click.CommandCollection(sources=[cli2, init_cli, test_cli])
 
 
 def main():

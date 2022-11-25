@@ -18,6 +18,10 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = logging.getLogger(__name__)
 
 
+class DeprecatedException(Exception):
+    pass
+
+
 class ErrorLevel(enum.Enum):
     error = 'error'
     warn = 'warn'
@@ -86,6 +90,15 @@ def gen_for_path(root_path: str):
             break
 
     return sorted(list(result))
+
+
+def test(existing_config, new_config):
+    for deprecated in existing_config['deprecated_things']:
+        exiting_usages = set(existing_config['usage'].get(deprecated, []))
+        new_usages = set(new_config['usage'].get(deprecated, []))
+        dif = new_usages.difference(exiting_usages)
+        if len(dif) > 0:
+            raise DeprecatedException(f'Deprecated function {deprecated}, has new usages {dif}')
 
 
 def find_usages(root_path: str, deprecated_things: List[str]):
