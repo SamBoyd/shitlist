@@ -18,10 +18,8 @@ def init_cli():
 def init():
     """Initialize the shitlist coniguration file
 
-    Initialize the .shitlist file in the project root directory
+    Creates the .shitlist file in the project root directory
     \f
-
-    :param click.core.Context ctx: Click context.
     """
 
     click.echo("Initializing config file in .shitlist")
@@ -42,16 +40,6 @@ def init():
 
 
 @click.group()
-def cli2():
-    pass
-
-
-@cli2.command()
-def cmd2():
-    """Command on cli2"""
-
-
-@click.group()
 def test_cli():
     pass
 
@@ -59,6 +47,8 @@ def test_cli():
 @test_cli.command()
 def test():
     """Test new usages of deprecated code
+
+    The test fails if you introduce new usages of deprecated code
     """
     if not os.path.exists('.shitlist'):
         logger.info('Cannot test there is no config file present')
@@ -85,6 +75,8 @@ def update_cli():
 @update_cli.command()
 def update():
     """Update the config with removed usages
+
+    Update the shitlist config with any newly deprecated code
     """
     existing_config = shitlist.Config.from_file('.shitlist')
 
@@ -110,7 +102,7 @@ def update():
         file.flush()
 
 
-cli = click.CommandCollection(sources=[cli2, init_cli, test_cli, update_cli])
+cli = click.CommandCollection(sources=[init_cli, test_cli, update_cli])
 
 
 def main():
