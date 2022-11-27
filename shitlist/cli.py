@@ -25,6 +25,9 @@ def init():
     Creates the .shitlist file in the project root directory
     \f
     """
+    if os.path.exists('.shitlist'):
+        logger.info('Initialized file already exists')
+        return
 
     click.echo("Initializing config file in .shitlist")
 
