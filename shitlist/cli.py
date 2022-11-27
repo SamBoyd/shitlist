@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import PosixPath
 
 import click
 
@@ -8,6 +9,9 @@ import shitlist
 
 logger = logging.getLogger(__name__)
 
+
+class NoConfigFileException(Exception):
+    pass
 
 @click.group()
 def init_cli():
@@ -25,18 +29,9 @@ def init():
     click.echo("Initializing config file in .shitlist")
 
     cwd = os.getcwd()
-    deprecated_things = shitlist.gen_for_path(cwd)
 
-    usages = shitlist.find_usages(cwd, deprecated_things)
-
-    with open('.shitlist', 'w', encoding='utf-8') as file:
-        data = dict(
-            deprecated_things=deprecated_things,
-            usage=usages
-        )
-        json.dump(data, file, ensure_ascii=False, indent=4)
-        file.write('\n')
-        file.flush()
+    config = shitlist.Config()
+    config.write('.shitlist')
 
 
 @click.group()
@@ -52,13 +47,14 @@ def test():
     """
     if not os.path.exists('.shitlist'):
         logger.info('Cannot test there is no config file present')
+        raise NoConfigFileException()
 
     existing_config = shitlist.Config.from_file('.shitlist')
 
-    cwd = os.getcwd()
-    new_config = shitlist.Config(
-        deprecated_things=shitlist.gen_for_path(cwd),
-        usage={}
+    cwd = PosixPath(os.getcwd())
+    new_config = shitlist.Config.from_path(
+        cwd,
+        ignore_directories=existing_config.ignore_directories
     )
 
     shitlist.test(
@@ -78,13 +74,17 @@ def update():
 
     Update the shitlist config with any newly deprecated code
     """
+    if not os.path.exists('.shitlist'):
+        logger.info('Cannot test there is no config file present')
+        raise NoConfigFileException()
+
     existing_config = shitlist.Config.from_file('.shitlist')
 
-    cwd = os.getcwd()
+    cwd = PosixPath(os.getcwd())
 
-    new_config = shitlist.Config(
-        deprecated_things=shitlist.gen_for_path(cwd),
-        usage={}
+    new_config = shitlist.Config.from_path(
+        cwd,
+        ignore_directories=existing_config.ignore_directories
     )
 
     shitlist.test(
@@ -96,10 +96,8 @@ def update():
         existing_config=existing_config,
         new_config=new_config
     )
-    with open('.shitlist', 'w', encoding='utf-8') as file:
-        json.dump(merged_config.__dict__(), file, ensure_ascii=False, indent=4)
-        file.write('\n')
-        file.flush()
+
+    merged_config.write('.shitlist')
 
 
 cli = click.CommandCollection(sources=[init_cli, test_cli, update_cli])
