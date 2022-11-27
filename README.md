@@ -1,4 +1,5 @@
-# Shitlist 
+
+![Shitlist](https://github.com/samboyd/shitlist/assets/logo.svg?raw=true)
 
 ---
 
