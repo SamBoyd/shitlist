@@ -1,5 +1,4 @@
 import ast
-import pdb
 from collections import ChainMap
 from types import MappingProxyType as readonlydict
 
@@ -19,29 +18,26 @@ class DecoratorUseCollector(ast.NodeVisitor):
 
     def _check_decorators(self, node):
         for decorator in node.decorator_list:
+            # This will match calls to `@shitlist.deprecate(..)`
             if (
-                    isinstance(decorator, ast.Attribute) and
-                    isinstance(decorator.value, ast.Name) and
-                    decorator.value.id == 'shitlist' and
-                    decorator.attr == 'deprecate'
+                    isinstance(decorator, ast.Call) and
+                    'func' in decorator.__dict__ and
+                    isinstance(decorator.func, ast.Attribute) and
+                    decorator.func.attr == 'deprecate' and
+                    'value' in decorator.func.__dict__ and
+                    decorator.func.value.id == 'shitlist'
             ):
                 self.nodes_with_decorators.append(node.name)
+                return
 
+            # This will match calls to `@deprecate(..)` where deprecated has been imported from shitlist
             if (
-                    isinstance(decorator, ast.Attribute) and
-                    'value' in decorator.value.__dict__ and
-                    isinstance(decorator.value.value, ast.Name) and
-                    decorator.value.value.id == 'shitlist' and
-                    decorator.attr == 'deprecate'
+                    isinstance(decorator, ast.Call) and
+                    'func' in decorator.__dict__ and
+                    isinstance(decorator.func, ast.Name) and
+                    decorator.func.id == 'deprecate' and
+                    self.scopes.get('deprecate', None) == 'shitlist'
             ):
-                self.nodes_with_decorators.append(node.name)
-
-            if (
-                    isinstance(decorator, ast.Name) and
-                    decorator.id == 'deprecate' and
-                    self.scopes.get('deprecate', None) == 'shitlist.deprecate'
-            ):
-                # pdb.set_trace()
                 self.nodes_with_decorators.append(node.name)
 
     def visit_FunctionDef(self, node):
@@ -87,12 +83,11 @@ class DecoratorUseCollector(ast.NodeVisitor):
                 a.asname or a.name: f'{self.modulename}.{a.name}'
                 for a in node.names
             })
-        elif self.modulepackage and self.modulepackage == source:
+        else:
             # from package import module import, where package.module is what we want
             self.scopes.update({
-                a.asname or a.name: self.modulename
+                a.asname or a.name: node.module
                 for a in node.names
-                if a.name == self.modulestem
             })
 
     def visit_Name(self, node):

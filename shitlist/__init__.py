@@ -17,6 +17,10 @@ class DeprecatedException(Exception):
     pass
 
 
+class UndefinedAlternativeException(Exception):
+    pass
+
+
 class ErrorLevel(enum.Enum):
     error = 'error'
     warn = 'warn'
@@ -37,27 +41,33 @@ def get_func_name(func: Callable):
     return f'{filepath}::{func_name}'
 
 
-def deprecate(func):
-    # wrap a function
-    if type(func).__name__ == 'function':
-        def wrapper():
-            if get_func_name(func) not in usages:
-                if error_level == ErrorLevel.error:
-                    raise RuntimeError()
-                else:
-                    func_name = func.__qualname__
-                    logger.info(
-                        f'function {func_name} is registered on a shitlist and therefore should not'
-                        f' be used by new code'
-                    )
-            func()
+def deprecate(alternative: str):
+    if alternative is None:
+        raise UndefinedAlternativeException("alternative code not defined")
 
-        wrapper.shitlist_deprecate = True
-        wrapper.wrapped_function = get_func_name(func)
+    def wrapped_deprecate(func):
+        # wrap a function
+        if type(func).__name__ == 'function':
+            def wrapper():
+                if get_func_name(func) not in usages:
+                    if error_level == ErrorLevel.error:
+                        raise RuntimeError()
+                    else:
+                        func_name = func.__qualname__
+                        logger.info(
+                            f'function {func_name} is registered on a shitlist and therefore should not'
+                            f' be used by new code'
+                        )
+                func()
 
-        return wrapper
-    else:
-        raise WrongTypeError()
+            wrapper.shitlist_deprecate = True
+            wrapper.wrapped_function = get_func_name(func)
+
+            return wrapper
+        else:
+            raise WrongTypeError()
+
+    return wrapped_deprecate
 
 
 def gen_for_path(
@@ -111,7 +121,7 @@ class TreeWalker:
     def _gen_next(self):
         try:
             self._current_dir, _, files = next(self._walker)
-            self._current_files = [f for f in files if f[-3:] == '.py'] #TODO could error on short named files
+            self._current_files = [f for f in files if f[-3:] == '.py']  # TODO could error on short named files
             if not self._current_files or self.directory_should_be_ignored(self._current_dir):
                 self._gen_next()
         except StopIteration:

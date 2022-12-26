@@ -6,6 +6,6 @@ def not_wrapped():
     return 0
 
 
-@shitlist.deprecate
+@shitlist.deprecate(alternative='test')
 def wrapped():
     return 1

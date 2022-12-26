@@ -30,7 +30,9 @@ Deprecate some code
 ```python
 import shitlist
 
-@shitlist.deprecate
+@shitlist.deprecate(
+    alternative='You should use `new_function` because of X, Y & Z'
+)
 def old_function():
     pass
 ```

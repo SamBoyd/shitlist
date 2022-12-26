@@ -7,7 +7,7 @@ import shitlist
 from shitlist import deprecate, Config
 
 
-@shitlist.deprecate
+@shitlist.deprecate(alternative='test')
 def func_test():
     return 0
 
@@ -19,14 +19,14 @@ def another_func_test():
 
 def test_raises_if_not_function():
     with pytest.raises(shitlist.WrongTypeError):
-        @shitlist.deprecate
+        @shitlist.deprecate(alternative='test')
         class TestClass:
             pass
 
 
 def test_raises_runtime_error():
     with pytest.raises(RuntimeError) as e_info:
-        @shitlist.deprecate
+        @shitlist.deprecate(alternative='test')
         def func():
             return 0
 
@@ -34,7 +34,7 @@ def test_raises_runtime_error():
 
 
 def test_passes_check(mocker):
-    @shitlist.deprecate
+    @shitlist.deprecate(alternative='test')
     def func():
         return 0
 
@@ -52,7 +52,7 @@ def test_generate_shitlist_for_path(pytestconfig):
         'example_module::wrapped_2',
         'example_module.example_file::wrapped_3',
         'example_module.submodule::wrapped',
-        'example_module.submodule.example_file::wrapped',
+        'example_module.submodule.submodule_example_file::wrapped',
     ]
 
     assert_that(
@@ -241,3 +241,11 @@ def assert_config_are_equal(config_1: Config, config_2: Config):
         equal_to(config_2.successfully_removed_things),
         'property successfully_removed_things are not equal'
     )
+
+
+def test_deprecated_code_must_define_alternative():
+    with pytest.raises(shitlist.UndefinedAlternativeException):
+        @deprecate(alternative=None)
+        def some_func():
+            pass
+
