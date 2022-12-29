@@ -1,15 +1,13 @@
 import ast
 import collections
-import pdb
 from _ast import AST
 from collections import ChainMap
 from types import MappingProxyType as readonlydict
-from typing import List
 
 
-class DeprecatedThingUseCollector(ast.NodeVisitor):
-    def __init__(self, deprecated_thing: str, modulename, package=''):
-        self.deprecated_thing = deprecated_thing
+class DeprecatedCodeUseCollector(ast.NodeVisitor):
+    def __init__(self, deprecated_code: str, modulename, package=''):
+        self.deprecated_code = deprecated_code
         self.modulename = modulename
         # used to resolve from ... import ... references
         self.package = package
@@ -31,7 +29,7 @@ class DeprecatedThingUseCollector(ast.NodeVisitor):
                         self.visit(item)
             elif isinstance(value, AST):
                 self.visit(value)
-            elif field == "attr" and value == self.deprecated_thing:
+            elif field == "attr" and value == self.deprecated_code:
                 self.visit_attr(value, prev_value)
             rev_field, prev_value = field, value
 
@@ -103,7 +101,7 @@ class DeprecatedThingUseCollector(ast.NodeVisitor):
         if imported_name is None:
             return
         # pdb.set_trace()
-        if self.deprecated_thing == node.id:
+        if self.deprecated_code == node.id:
             self.used_at.append(self.scope_names[0])
 
     def visit_attr(self, node, prev_node):
@@ -111,5 +109,5 @@ class DeprecatedThingUseCollector(ast.NodeVisitor):
         if imported_name is None:
             return
             # pdb.set_trace()
-        if self.deprecated_thing == node:
+        if self.deprecated_code == node:
             self.used_at.append(self.scope_names[0])

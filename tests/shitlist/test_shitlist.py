@@ -4,7 +4,6 @@ import pytest
 from hamcrest import assert_that, has_items, equal_to
 
 import shitlist
-from shitlist import deprecate, Config
 
 
 @shitlist.deprecate(alternative='test')
@@ -12,7 +11,7 @@ def func_test():
     return 0
 
 
-@deprecate
+@shitlist.deprecate(alternative='test')
 def another_func_test():
     return 1
 
@@ -45,14 +44,14 @@ def test_passes_check(mocker):
 
 def test_generate_shitlist_for_path(pytestconfig):
     test_root = PosixPath(pytestconfig.rootpath)
-    result = shitlist.gen_for_path(str(test_root.parent))
+    result = shitlist.gen_for_path(test_root)
 
     expected_result = [
-        'example_module::wrapped_1',
-        'example_module::wrapped_2',
-        'example_module.example_file::wrapped_3',
-        'example_module.submodule::wrapped',
-        'example_module.submodule.submodule_example_file::wrapped',
+        'tests.example_module::wrapped_1',
+        'tests.example_module::wrapped_2',
+        'tests.example_module.example_file::wrapped_3',
+        'tests.example_module.submodule::wrapped',
+        'tests.example_module.submodule.submodule_example_file::wrapped',
     ]
 
     assert_that(
@@ -62,8 +61,8 @@ def test_generate_shitlist_for_path(pytestconfig):
 
 
 def test_shitlist_test_throws_an_exception_if_theres_a_new_usage_of_a_deprecated_thing():
-    existing_config = Config(
-        deprecated_things=[
+    existing_config = shitlist.Config(
+        deprecated_code=[
             'thing_1',
             'thing_2',
             'thing_3'
@@ -75,8 +74,8 @@ def test_shitlist_test_throws_an_exception_if_theres_a_new_usage_of_a_deprecated
         }
     )
 
-    new_config = Config(
-        deprecated_things=[
+    new_config = shitlist.Config(
+        deprecated_code=[
             'thing_1',
             'thing_2',
             'thing_3'
@@ -100,8 +99,8 @@ def test_shitlist_test_should_fail_if_reintroduce_a_previously_deprecated_thing(
 
 
 def test_shitlist_test_passes():
-    existing_config = Config(
-        deprecated_things=[
+    existing_config = shitlist.Config(
+        deprecated_code=[
             'thing_1',
             'thing_2',
             'thing_3'
@@ -113,8 +112,8 @@ def test_shitlist_test_passes():
         }
     )
 
-    new_config = Config(
-        deprecated_things=[
+    new_config = shitlist.Config(
+        deprecated_code=[
             'thing_1',
             'thing_3'
         ],
@@ -134,23 +133,23 @@ def test_shitlist_test_passes():
 def test_find_usages(pytestconfig):
     test_root = PosixPath(pytestconfig.rootpath)
 
-    deprecated_things = [
+    deprecated_code = [
         'tests.example_module::wrapped_2',
         'tests.example_module::wrapped_1'
     ]
 
-    result = shitlist.find_usages(str(test_root.parent), deprecated_things)
+    result = shitlist.find_usages(test_root, deprecated_code)
 
     expected_result = {
-        'tests.example_module::wrapped_2': ['example_module.example_file::wrapped_3'],
-        'tests.example_module::wrapped_1': ['example_module.example_file::wrapped_3']
+        'tests.example_module::wrapped_2': ['tests.example_module.example_file::wrapped_3'],
+        'tests.example_module::wrapped_1': ['tests.example_module.example_file::wrapped_3']
     }
     assert_that(result, equal_to(expected_result))
 
 
 def test_update_config():
-    existing_config = Config(
-        deprecated_things=[
+    existing_config = shitlist.Config(
+        deprecated_code=[
             'thing_1',
             'thing_2',
             'thing_3'
@@ -162,8 +161,8 @@ def test_update_config():
         }
     )
 
-    new_config = Config(
-        deprecated_things=[
+    new_config = shitlist.Config(
+        deprecated_code=[
             'thing_1',
             'thing_3',
             'thing_not_in_existing_config'
@@ -180,8 +179,8 @@ def test_update_config():
         new_config=new_config
     )
 
-    expected_config = Config(
-        deprecated_things=[
+    expected_config = shitlist.Config(
+        deprecated_code=[
             'thing_1',
             'thing_3',
             'thing_not_in_existing_config'
@@ -203,7 +202,7 @@ def test_update_config():
 
 
 def test_ignores_directories(pytestconfig):
-    test_root = PosixPath(pytestconfig.rootpath).parent
+    test_root = PosixPath(pytestconfig.rootpath) / 'tests'
 
     walker = shitlist.TreeWalker(
         root_dir=test_root / 'example_module',
@@ -217,11 +216,11 @@ def test_ignores_directories(pytestconfig):
 
     assert_that(walker.has_next, equal_to(False))
 
-def assert_config_are_equal(config_1: Config, config_2: Config):
+def assert_config_are_equal(config_1: shitlist.Config, config_2: shitlist.Config):
     assert_that(
-        config_1.deprecated_things,
-        equal_to(config_2.deprecated_things),
-        'property deprecated_things are not equal'
+        config_1.deprecated_code,
+        equal_to(config_2.deprecated_code),
+        'property deprecated_code are not equal'
     )
 
     assert_that(
@@ -245,7 +244,7 @@ def assert_config_are_equal(config_1: Config, config_2: Config):
 
 def test_deprecated_code_must_define_alternative():
     with pytest.raises(shitlist.UndefinedAlternativeException):
-        @deprecate(alternative=None)
+        @shitlist.deprecate(alternative=None)
         def some_func():
             pass
 

@@ -7,7 +7,7 @@ from typing import List, Callable, Optional
 
 from shitlist.config import Config
 from shitlist.decorator_use_collector import DecoratorUseCollector
-from shitlist.deprecated_thing_use_collector import DeprecatedThingUseCollector
+from shitlist.deprecated_code_use_collector import DeprecatedCodeUseCollector
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ def gen_for_path(
 
 
 def test(existing_config: Config, new_config: Config):
-    for thing in existing_config.deprecated_things:
+    for thing in existing_config.deprecated_code:
         exiting_usages = set(existing_config.usage.get(thing, []))
         new_usages = set(new_config.usage.get(thing, []))
         dif = new_usages.difference(exiting_usages)
@@ -143,7 +143,7 @@ class TreeWalker:
 
 def find_usages(
         root_path: PosixPath,
-        deprecated_things: List[str],
+        deprecated_code: List[str],
         ignore_directories=[]
 ):
     result = {}
@@ -161,11 +161,11 @@ def find_usages(
 
         package = relative_path.replace('.py', '').replace('/', '.')
 
-        for thing in deprecated_things:
+        for thing in deprecated_code:
             module, _, function_name = thing.rpartition('::')
             module_package = module.split('.')[0]
-            collector = DeprecatedThingUseCollector(
-                deprecated_thing=function_name,
+            collector = DeprecatedCodeUseCollector(
+                deprecated_code=function_name,
                 modulename=module,
                 package=module_package
             )
@@ -182,13 +182,13 @@ def find_usages(
 
 def update(existing_config: Config, new_config: Config):
     merged_config = Config(
-        deprecated_things=new_config.deprecated_things,
+        deprecated_code=new_config.deprecated_code,
         usage=new_config.usage,
         ignore_directories=existing_config.ignore_directories
     )
 
     merged_config.successfully_removed_things = [
-        t for t in existing_config.deprecated_things if t not in new_config.deprecated_things
+        t for t in existing_config.deprecated_code if t not in new_config.deprecated_code
     ]
 
     for thing, new_usage in new_config.usage.items():
