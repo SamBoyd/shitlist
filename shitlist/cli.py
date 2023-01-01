@@ -68,6 +68,8 @@ def test():
         new_config=new_config
     )
 
+    logger.info('Successfully tested deprecated code')
+
 
 @click.group()
 def update_cli():
