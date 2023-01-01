@@ -70,6 +70,12 @@ def test():
 
     logger.info('Successfully tested deprecated code')
 
+    if [dc for dc in new_config.deprecated_code if dc not in existing_config.deprecated_code]:
+        logger.info(
+            'Warning: there is newly deprecated code not represented in config. '
+            'Run `shitlist update`'
+        )
+
 
 @click.group()
 def update_cli():
@@ -84,7 +90,7 @@ def update():
     """
     if not os.path.exists('.shitlist'):
         logger.info('Cannot test there is no config file present')
-        raise NoConfigFileException()
+        return
 
     existing_config = shitlist.Config.from_file('.shitlist')
 
