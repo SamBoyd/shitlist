@@ -158,7 +158,11 @@ def test_update_config():
             'thing_1': ['usage_1_of_thing_1', 'usage_2_of_thing_1'],
             'thing_2': ['usage_1_of_thing_2', 'usage_2_of_thing_2'],
             'thing_3': ['usage_1_of_thing_3', 'usage_2_of_thing_3'],
-        }
+        },
+        removed_usages={
+            'thing_1': ['usage_3_of_thing_1'],
+        },
+        successfully_removed_things=['thing_4']
     )
 
     new_config = shitlist.Config(
@@ -191,10 +195,12 @@ def test_update_config():
             'thing_not_in_existing_config': ['usage']
         },
         removed_usages={
+            'thing_1': ['usage_3_of_thing_1'],
             'thing_3': ['usage_1_of_thing_3']
         },
         successfully_removed_things=[
-            'thing_2',
+            'thing_4',
+            'thing_2'
         ]
     )
 
@@ -215,6 +221,7 @@ def test_ignores_directories(pytestconfig):
     assert_that(walker.next_file().name, equal_to('__init__.py'))
 
     assert_that(walker.has_next, equal_to(False))
+
 
 def assert_config_are_equal(config_1: shitlist.Config, config_2: shitlist.Config):
     assert_that(
@@ -247,4 +254,3 @@ def test_deprecated_code_must_define_alternative():
         @shitlist.deprecate(alternative=None)
         def some_func():
             pass
-

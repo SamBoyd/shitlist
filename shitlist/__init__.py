@@ -184,12 +184,14 @@ def update(existing_config: Config, new_config: Config):
     merged_config = Config(
         deprecated_code=new_config.deprecated_code,
         usage=new_config.usage,
-        ignore_directories=existing_config.ignore_directories
+        ignore_directories=existing_config.ignore_directories,
+        removed_usages=existing_config.removed_usages,
+        successfully_removed_things=existing_config.successfully_removed_things
     )
 
-    merged_config.successfully_removed_things = [
+    merged_config.successfully_removed_things.extend([
         t for t in existing_config.deprecated_code if t not in new_config.deprecated_code
-    ]
+    ])
 
     for thing, new_usage in new_config.usage.items():
         if thing in existing_config.usage:
