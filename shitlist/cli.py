@@ -117,7 +117,41 @@ def update():
     merged_config.write(config_filepath)
 
 
-cli = click.CommandCollection(sources=[init_cli, test_cli, update_cli])
+@click.group()
+def progress_cli():
+    pass
+
+
+@progress_cli.command()
+def progress():
+    """Display deprecated code burn down table"""
+
+    if not os.path.exists(config_filepath):
+        logger.info('Cannot test there is no config file present')
+        return
+
+    config = shitlist.Config.from_file(config_filepath)
+
+    progress_map = {
+        dc: (len(config.removed_usages.get(dc, [])), len(config.usage[dc]) + len(config.removed_usages.get(dc, [])))
+        for dc in config.deprecated_code
+    }
+
+    logger.info('Progress removing deprecated code:')
+
+    for dc in config.deprecated_code:
+        remaining, total = progress_map[dc]
+
+        if total == 0:
+            logger.info(f' 100%\t[##########]\t{dc}')
+        else:
+            out_of_ten = int((remaining / total) * 10)
+            l = '#' * out_of_ten
+            s = '-' * (10 - out_of_ten)
+            logger.info(f' {out_of_ten * 10}%\t[{l}{s}]\t{dc}')
+
+
+cli = click.CommandCollection(sources=[init_cli, test_cli, update_cli, progress_cli])
 
 
 def main():
