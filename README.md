@@ -45,5 +45,5 @@ shitlist update
 
 Test
 ```bash
-shitlsit test
+shitlist test
 ```
