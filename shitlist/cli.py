@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from pathlib import PosixPath
@@ -13,8 +12,12 @@ logging.basicConfig(
     format='%(message)s'
 )
 
+config_filepath = '.shitlist'
+
+
 class NoConfigFileException(Exception):
     pass
+
 
 @click.group()
 def init_cli():
@@ -28,16 +31,16 @@ def init():
     Creates the .shitlist file in the project root directory
     \f
     """
-    if os.path.exists('.shitlist'):
+    if os.path.exists(config_filepath):
         logger.info('Initialized file already exists')
         return
 
-    click.echo("Initializing config file in .shitlist")
+    click.echo(f"Initializing config file in {config_filepath}")
 
     cwd = os.getcwd()
 
     config = shitlist.Config()
-    config.write('.shitlist')
+    config.write(config_filepath)
 
 
 @click.group()
@@ -51,11 +54,11 @@ def test():
 
     The test fails if you introduce new usages of deprecated code
     """
-    if not os.path.exists('.shitlist'):
+    if not os.path.exists(config_filepath):
         logger.info('Cannot test there is no config file present')
         raise NoConfigFileException()
 
-    existing_config = shitlist.Config.from_file('.shitlist')
+    existing_config = shitlist.Config.from_file(config_filepath)
 
     cwd = PosixPath(os.getcwd())
     new_config = shitlist.Config.from_path(
@@ -88,11 +91,11 @@ def update():
 
     Update the shitlist config with any newly deprecated code
     """
-    if not os.path.exists('.shitlist'):
+    if not os.path.exists(config_filepath):
         logger.info('Cannot test there is no config file present')
         return
 
-    existing_config = shitlist.Config.from_file('.shitlist')
+    existing_config = shitlist.Config.from_file(config_filepath)
 
     cwd = PosixPath(os.getcwd())
 
@@ -111,7 +114,7 @@ def update():
         new_config=new_config
     )
 
-    merged_config.write('.shitlist')
+    merged_config.write(config_filepath)
 
 
 cli = click.CommandCollection(sources=[init_cli, test_cli, update_cli])
