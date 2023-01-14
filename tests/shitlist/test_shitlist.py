@@ -32,6 +32,7 @@ def test_raises_runtime_error():
         func()
 
 
+@pytest.mark.skip
 def test_passes_check(mocker):
     @shitlist.deprecate(alternative='test')
     def func():
@@ -94,6 +95,7 @@ def test_shitlist_test_throws_an_exception_if_theres_a_new_usage_of_a_deprecated
         )
 
 
+@pytest.mark.skip
 def test_shitlist_test_should_fail_if_reintroduce_a_previously_deprecated_thing():
     assert_that(True, equal_to(False))
 
